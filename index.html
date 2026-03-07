@@ -490,6 +490,17 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
     </div>
 
     <div class="settings-section" style="padding-bottom:30px">
+      <div class="settings-section-title">🔑 Clé API (pour l'Agent IA)</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openApiKeyModal()">
+          <div class="settings-row-icon">🤖</div>
+          <div class="settings-row-info"><div class="settings-row-label">Clé API Anthropic</div><div class="settings-row-sub" id="apiKeySub">Non configurée</div></div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section" style="padding-bottom:30px">
       <div class="settings-section-title">🎂 Anniversaires</div>
       <div class="item-list" id="bdaySettingsList"></div>
       <button class="add-btn" style="margin-top:8px" onclick="openAddBirthday()">＋ Ajouter un anniversaire</button>
@@ -499,8 +510,8 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
       <div class="settings-section-title">📱 Liens réseaux sociaux</div>
       <div class="settings-card">
         <div class="settings-row" onclick="openSocialLinks()">
-          <div class="settings-row-icon">▶️</div>
-          <div class="settings-row-info"><div class="settings-row-label">YouTube & WhatsApp</div><div class="settings-row-sub" id="socialLinksSub">Non configuré</div></div>
+          <div class="settings-row-icon">🔗</div>
+          <div class="settings-row-info"><div class="settings-row-label">YouTube, WhatsApp, Facebook</div><div class="settings-row-sub" id="socialLinksSub">Non configuré</div></div>
           <div class="settings-row-arrow">›</div>
         </div>
       </div>
@@ -526,12 +537,15 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
       <!-- Réseaux sociaux -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:12px">📱 Mes réseaux</div>
-        <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <button class="social-btn" id="btn-youtube" onclick="openSocial('youtube')">
             <span style="font-size:24px">▶️</span><span>YouTube</span>
           </button>
           <button class="social-btn" id="btn-whatsapp" onclick="openSocial('whatsapp')">
             <span style="font-size:24px">💬</span><span>WhatsApp</span>
+          </button>
+          <button class="social-btn" id="btn-facebook" onclick="openSocial('facebook')">
+            <span style="font-size:24px">👥</span><span>Facebook</span>
           </button>
         </div>
         <button class="add-btn" onclick="openSocialLinks()" style="font-size:12px;padding:9px">⚙️ Configurer mes liens</button>
@@ -544,6 +558,7 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
           <select class="form-select" id="postNetwork">
             <option value="youtube">YouTube (description)</option>
             <option value="whatsapp">WhatsApp (message)</option>
+            <option value="facebook">Facebook (post)</option>
           </select>
         </div>
         <textarea class="form-textarea" id="postTopic" placeholder="Sujet du post... Ex: Partager mon avancement en Python" style="margin-bottom:8px"></textarea>
@@ -1012,10 +1027,14 @@ function renderAllSettings(){
       <button class="icon-btn del" onclick="deleteBirthday('${b.id}')">🗑️</button>
     </div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:6px 0">Aucun anniversaire</div>';
 
+  // API Key status
+  const aks=document.getElementById('apiKeySub');
+  if(aks)aks.textContent=S.apiKey?'✅ Configurée (sk-ant-***)':'❌ Non configurée';
+
   // Social links
   const sls=document.getElementById('socialLinksSub');
-  const hasYt=S.socialLinks?.youtube,hasWa=S.socialLinks?.whatsapp;
-  if(sls)sls.textContent=hasYt||hasWa?[hasYt?'YouTube ✅':'',hasWa?'WhatsApp ✅':''].filter(Boolean).join(' · '):'Non configuré';
+  const hasYt=S.socialLinks?.youtube,hasWa=S.socialLinks?.whatsapp,hasFb=S.socialLinks?.facebook;
+  if(sls)sls.textContent=[hasYt?'YouTube ✅':'',hasWa?'WhatsApp ✅':'',hasFb?'Facebook ✅':''].filter(Boolean).join(' · ')||'Non configuré';
 }
 
 // ─── PROFILE ─────────────────────────────────────────────
@@ -1249,69 +1268,104 @@ function saveBirthday(id){
 function deleteBirthday(id){if(confirm('Supprimer ?')){S.birthdays=S.birthdays.filter(x=>x.id!==id);save();renderBirthdays();closeModal();}}
 
 async function generateBdayMsg(id){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
   const b=S.birthdays.find(x=>x.id===id);if(!b)return;
   showToast('🤖','Génération en cours...');
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Génère un message d'anniversaire chaleureux et sincère en français pour ${b.name}. Court, 2-3 phrases max, avec émojis.`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Génère un message d'anniversaire chaleureux et sincère en français pour ${b.name}. Court, 2-3 phrases max, avec émojis.`}]})});
     const data=await resp.json();
+    if(data.error){showToast('❌',data.error.message||'Erreur API');return;}
     const msg=data.content?.map(i=>i.text||'').join('')||'Joyeux anniversaire ! 🎂🎉';
-    openModal('🎂 Message pour '+b.name,`<div style="background:var(--surface);border:1px solid var(--accent);border-radius:13px;padding:16px;font-size:14px;line-height:1.7;margin-bottom:14px">${msg}</div>
+    openModal('🎂 Message pour '+b.name,`
+      <div id="bdayMsgText" style="background:var(--surface);border:1px solid var(--accent);border-radius:13px;padding:16px;font-size:14px;line-height:1.7;margin-bottom:14px">${msg}</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="flex:1" onclick="navigator.clipboard.writeText(document.querySelector('#modal .modal-body div').textContent);showToast('📋','Copié !')">📋 Copier</button>
-        <button class="btn btn-primary" style="flex:1" onclick="window.open('https://wa.me/?text='+encodeURIComponent(document.querySelector('#modal .modal-body div').textContent))">💬 WhatsApp</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="navigator.clipboard.writeText(document.getElementById('bdayMsgText').textContent).then(()=>showToast('📋','Copié !'))">📋 Copier</button>
+        <button class="btn btn-primary" style="flex:1" onclick="window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('bdayMsgText').textContent),'_blank')">💬 WhatsApp</button>
       </div>`);
-  }catch(e){showToast('❌','Erreur, réessaie');}
+  }catch(e){showToast('❌','Erreur, vérifie ta clé API');}
+}
+
+// ─── API KEY ─────────────────────────────────────────────
+function getApiKey(){return S.apiKey||'';}
+function openApiKeyModal(){
+  openModal('🔑 Clé API Anthropic',`
+    <div style="background:rgba(244,200,122,.08);border:1px solid rgba(244,200,122,.3);border-radius:12px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+      💡 Va sur <strong style="color:var(--accent)">console.anthropic.com</strong> → API Keys → Create Key<br>
+      Ta clé commence par <strong>sk-ant-...</strong><br>
+      Elle est stockée uniquement sur ton téléphone.
+    </div>
+    <div class="form-group"><label class="form-label">Clé API (sk-ant-...)</label>
+      <input class="form-input" id="apiKeyInput" type="password" value="${S.apiKey||''}" placeholder="sk-ant-api03-..."></div>
+    <button class="btn btn-primary" onclick="saveApiKey()">💾 Sauvegarder</button>
+    ${S.apiKey?'<div style="margin-top:8px"><button class="btn btn-danger" onclick="deleteApiKey()">🗑️ Supprimer la clé</button></div>':''}`);
+}
+function saveApiKey(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key){showToast('⚠️','Entre ta clé API !');return;}
+  S.apiKey=key;save();
+  renderAllSettings();closeModal();showToast('✅','Clé API sauvegardée !');
+}
+function deleteApiKey(){
+  if(confirm('Supprimer la clé API ?')){S.apiKey='';save();renderAllSettings();closeModal();}
 }
 
 // ─── SOCIAL LINKS ─────────────────────────────────────────
 function openSocialLinks(){
   const yt=S.socialLinks?.youtube||'';
   const wa=S.socialLinks?.whatsapp||'';
+  const fb=S.socialLinks?.facebook||'';
   openModal('📱 Mes liens réseaux',`
-    <div class="form-group"><label class="form-label">▶️ Lien YouTube (chaîne)</label><input class="form-input" id="slYt" value="${yt}" placeholder="https://youtube.com/@ta-chaine"></div>
+    <div class="form-group"><label class="form-label">▶️ Lien YouTube (ta chaîne)</label><input class="form-input" id="slYt" value="${yt}" placeholder="https://youtube.com/@ta-chaine"></div>
     <div class="form-group"><label class="form-label">💬 Numéro WhatsApp</label><input class="form-input" id="slWa" value="${wa}" placeholder="Ex: +33612345678"></div>
+    <div class="form-group"><label class="form-label">👥 Lien Facebook (profil/page)</label><input class="form-input" id="slFb" value="${fb}" placeholder="https://facebook.com/ton-profil"></div>
     <button class="btn btn-primary" onclick="saveSocialLinks()">💾 Sauvegarder</button>`);
 }
 function saveSocialLinks(){
   if(!S.socialLinks)S.socialLinks={};
   S.socialLinks.youtube=document.getElementById('slYt').value.trim();
   S.socialLinks.whatsapp=document.getElementById('slWa').value.trim();
-  save();updateSocialBtns();closeModal();showToast('✅','Liens sauvegardés !');
+  S.socialLinks.facebook=document.getElementById('slFb').value.trim();
+  save();updateSocialBtns();renderAllSettings();closeModal();showToast('✅','Liens sauvegardés !');
 }
 function updateSocialBtns(){
   const ytBtn=document.getElementById('btn-youtube');
   const waBtn=document.getElementById('btn-whatsapp');
+  const fbBtn=document.getElementById('btn-facebook');
   if(ytBtn)ytBtn.className='social-btn'+(S.socialLinks?.youtube?' configured':'');
   if(waBtn)waBtn.className='social-btn'+(S.socialLinks?.whatsapp?' configured':'');
+  if(fbBtn)fbBtn.className='social-btn'+(S.socialLinks?.facebook?' configured':'');
 }
 function openSocial(net){
-  if(net==='youtube'){
-    const url=S.socialLinks?.youtube||'https://youtube.com';
-    window.open(url,'_blank');
-  } else if(net==='whatsapp'){
-    const num=S.socialLinks?.whatsapp||'';
-    window.open(num?`https://wa.me/${num.replace(/\D/g,'')}`:'https://web.whatsapp.com','_blank');
-  }
+  const links={youtube:S.socialLinks?.youtube||'https://youtube.com',whatsapp:S.socialLinks?.whatsapp?`https://wa.me/${S.socialLinks.whatsapp.replace(/\D/g,'')}`:'https://web.whatsapp.com',facebook:S.socialLinks?.facebook||'https://facebook.com'};
+  window.open(links[net],'_blank');
 }
 
 // ─── GENERATE POST ────────────────────────────────────────
 async function generatePost(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
   const network=document.getElementById('postNetwork').value;
   const topic=document.getElementById('postTopic').value.trim();
   if(!topic){showToast('⚠️','Entre un sujet !');return;}
-  document.getElementById('postBtn').textContent='⏳ Génération...';
-  document.getElementById('postBtn').disabled=true;
-  const prompts={youtube:`Génère une description YouTube professionnelle et engageante en français pour une vidéo sur : "${topic}". Include des hashtags pertinents. Max 150 mots.`,whatsapp:`Génère un message WhatsApp court et sympa en français sur : "${topic}". Naturel, avec émojis. Max 3 phrases.`};
+  const btn=document.getElementById('postBtn');
+  btn.textContent='⏳ Génération...';btn.disabled=true;
+  const prompts={
+    youtube:`Génère une description YouTube professionnelle et engageante en français pour une vidéo sur : "${topic}". Inclus des hashtags pertinents. Max 150 mots.`,
+    whatsapp:`Génère un message WhatsApp court et sympa en français sur : "${topic}". Naturel, avec émojis. Max 3 phrases.`,
+    facebook:`Génère un post Facebook engageant en français sur : "${topic}". Avec émojis, accrocheur, max 100 mots.`
+  };
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompts[network]}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompts[network]}]})});
     const data=await resp.json();
-    const result=data.content?.map(i=>i.text||'').join('')||'Erreur de génération';
+    if(data.error){showToast('❌',data.error.message||'Erreur API');btn.textContent='✨ Générer';btn.disabled=false;return;}
+    const result=data.content?.map(i=>i.text||'').join('')||'Erreur';
     const el=document.getElementById('postResult');
     el.textContent=result;el.style.display='block';
-    document.getElementById('postActions').style.display='flex';
-  }catch(e){showToast('❌','Erreur, réessaie');}
-  document.getElementById('postBtn').textContent='✨ Générer';
-  document.getElementById('postBtn').disabled=false;
+    const pa=document.getElementById('postActions');
+    if(pa)pa.style.display='flex';
+  }catch(e){showToast('❌','Erreur, vérifie ta clé API');}
+  btn.textContent='✨ Générer';btn.disabled=false;
 }
 function copyPost(){
   const txt=document.getElementById('postResult').textContent;
@@ -1325,32 +1379,37 @@ function sharePost(){
 
 // ─── SUMMARIZE ARTICLE ────────────────────────────────────
 async function summarizeArticle(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
   const text=document.getElementById('articleText').value.trim();
   if(!text){showToast('⚠️','Colle un article !');return;}
-  document.getElementById('sumBtn').textContent='⏳ Résumé...';
-  document.getElementById('sumBtn').disabled=true;
+  const btn=document.getElementById('sumBtn');
+  btn.textContent='⏳ Résumé...';btn.disabled=true;
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Résume cet article en français en 5 points clés avec des émojis bullet points :\n\n${text.slice(0,3000)}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Résume cet article en français en 5 points clés avec des émojis bullet points :\n\n${text.slice(0,3000)}`}]})});
     const data=await resp.json();
+    if(data.error){showToast('❌',data.error.message||'Erreur API');btn.textContent='📖 Résumer';btn.disabled=false;return;}
     const result=data.content?.map(i=>i.text||'').join('')||'Erreur';
     const el=document.getElementById('sumResult');
     el.innerHTML=result.replace(/\n/g,'<br>');el.style.display='block';
-  }catch(e){showToast('❌','Erreur, réessaie');}
-  document.getElementById('sumBtn').textContent='📖 Résumer';
-  document.getElementById('sumBtn').disabled=false;
+  }catch(e){showToast('❌','Erreur, vérifie ta clé API');}
+  btn.textContent='📖 Résumer';btn.disabled=false;
 }
 
 // ─── QUIZ & FLASHCARDS ────────────────────────────────────
 let currentQuiz=null;
 
 async function startQuiz(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
   const subject=document.getElementById('quizSubject').value;
   const area=document.getElementById('quizArea');
   area.style.display='block';
   area.innerHTML=`<div class="quiz-card"><div class="quiz-q">⏳ Génération de la question...</div></div>`;
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Génère une question de quiz sur "${subject}" avec 4 réponses possibles. Réponds UNIQUEMENT en JSON valide sans markdown : {"question":"...","options":["A","B","C","D"],"correct":0}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Génère une question de quiz sur "${subject}" avec 4 réponses possibles. Réponds UNIQUEMENT en JSON valide sans markdown : {"question":"...","options":["A","B","C","D"],"correct":0}`}]})});
     const data=await resp.json();
+    if(data.error){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ ${data.error.message||'Erreur API'}</div></div>`;return;}
     let raw=data.content?.map(i=>i.text||'').join('')||'{}';
     raw=raw.replace(/```json|```/g,'').trim();
     const q=JSON.parse(raw);
@@ -1359,7 +1418,7 @@ async function startQuiz(){
       <div class="quiz-q">${q.question}</div>
       <div class="quiz-opts">${q.options.map((o,i)=>`<button class="quiz-opt" onclick="checkQuiz(${i},this)">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>
     </div>`;
-  }catch(e){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ Erreur, réessaie</div></div>`;}
+  }catch(e){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ Erreur, vérifie ta clé API</div></div>`;}
 }
 
 function checkQuiz(idx,btn){
@@ -1374,23 +1433,26 @@ function checkQuiz(idx,btn){
 }
 
 async function startFlashcard(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
   const subject=document.getElementById('quizSubject').value;
   const area=document.getElementById('quizArea');
   area.style.display='block';
   area.innerHTML=`<div class="quiz-card"><div class="quiz-q">⏳ Génération...</div></div>`;
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Génère une flashcard de révision sur "${subject}". Réponds UNIQUEMENT en JSON valide sans markdown : {"question":"...","answer":"..."}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Génère une flashcard de révision sur "${subject}". Réponds UNIQUEMENT en JSON valide sans markdown : {"question":"...","answer":"..."}`}]})});
     const data=await resp.json();
+    if(data.error){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ ${data.error.message||'Erreur API'}</div></div>`;return;}
     let raw=data.content?.map(i=>i.text||'').join('')||'{}';
     raw=raw.replace(/```json|```/g,'').trim();
     const fc=JSON.parse(raw);
-    area.innerHTML=`<div class="flashcard" onclick="flipFlashcard(this)" id="fcCard">
+    area.innerHTML=`<div class="flashcard" onclick="flipFlashcard(this)">
       <div class="flashcard-q">${fc.question}</div>
-      <div class="flashcard-a" id="fcAnswer">${fc.answer}</div>
+      <div class="flashcard-a" id="fcAnswer" style="display:none">${fc.answer}</div>
       <div class="flashcard-hint">👆 Appuie pour voir la réponse</div>
     </div>
     <button class="btn btn-ghost" style="margin-top:8px" onclick="startFlashcard()">🔄 Nouvelle carte</button>`;
-  }catch(e){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ Erreur, réessaie</div></div>`;}
+  }catch(e){area.innerHTML=`<div class="quiz-card"><div class="quiz-q">❌ Erreur, vérifie ta clé API</div></div>`;}
 }
 
 function flipFlashcard(el){
