@@ -535,7 +535,7 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div><div class="page-h-title">🤖 Agent IA</div><div class="page-h-sub">Ton assistant intelligent</div></div>
         <div style="display:flex;gap:6px">
-          <button class="icon-btn" id="outlookBtn" onclick="toggleOutlook()" style="width:auto;padding:6px 10px;font-size:11px;font-weight:700;gap:4px;display:flex;align-items:center">📅 <span id="outlookBtnTxt">Outlook</span></button>
+          <button style="background:rgba(0,120,212,.2);border:1px solid rgba(0,120,212,.5);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:#7eb8f7;font-family:'Karla',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px" id="outlookBtn" onclick="toggleOutlook()">📅 <span id="outlookBtnTxt">Connecter Outlook</span></button>
         </div>
       </div>
     </div>
@@ -1519,13 +1519,19 @@ function toggleOutlook(){
 
 function connectOutlook(){
   const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&prompt=select_account`;
-  window.open(authUrl,'_self');
+  // Create a temporary link and click it — works reliably on Android PWA
+  const a=document.createElement('a');
+  a.href=authUrl;
+  a.target='_self';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function disconnectOutlook(){
   msalToken=null;S.outlookToken=null;S.outlookEvents=[];save();
   document.getElementById('outlookBanner').style.display='none';
-  document.getElementById('outlookBtnTxt').textContent='Outlook';
+  document.getElementById('outlookBtnTxt').textContent='Connecter Outlook';
   showToast('👋','Outlook déconnecté');
 }
 
