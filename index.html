@@ -1518,10 +1518,8 @@ function toggleOutlook(){
 }
 
 function connectOutlook(){
-  const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&state=outlook`;
-  // Store that we're doing an Outlook login
-  sessionStorage.setItem('outlookPending','1');
-  window.location.href=authUrl;
+  const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&prompt=select_account`;
+  window.open(authUrl,'_self');
 }
 
 function disconnectOutlook(){
