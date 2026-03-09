@@ -263,7 +263,31 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
 .bday-name{font-size:13px;font-weight:700;}
 .bday-date{font-size:11px;color:var(--muted);margin-top:1px;}
 
-/* QUIZ AREA */
+/* CALENDAR CELLS */
+.cal-cell{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:5px 3px;text-align:center;cursor:pointer;min-height:46px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.15s;}
+.cal-cell:active{transform:scale(.95);}
+.cal-cell.today{border-color:var(--accent);background:rgba(244,200,122,.08);}
+.cal-cell.selected{border-color:var(--accent2);background:rgba(126,184,247,.12);}
+.cal-cell.other-month{opacity:.35;}
+.cal-cell.has-events::after{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;margin-top:1px;}
+.cal-day-num{font-size:12px;font-weight:700;color:var(--text);}
+.cal-cell.today .cal-day-num{color:var(--accent);}
+.week-cell{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:6px 4px;text-align:center;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.week-cell.today{border-color:var(--accent);}
+.week-cell.selected{border-color:var(--accent2);background:rgba(126,184,247,.12);}
+.week-cell.has-events::after{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;margin-top:1px;}
+
+/* RDV CARDS */
+.rdv-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:.15s;}
+.rdv-card:active{transform:scale(.98);}
+.rdv-card.done-rdv{opacity:.5;}
+.rdv-time-col{min-width:42px;text-align:center;}
+.rdv-time{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--accent2);}
+.rdv-dot{width:3px;flex:none;border-radius:2px;align-self:stretch;min-height:36px;}
+.rdv-info{flex:1;}
+.rdv-title{font-size:13px;font-weight:700;margin-bottom:2px;}
+.rdv-sub{font-size:11px;color:var(--muted);}
+.rdv-gcal{font-size:10px;color:#4285f4;font-weight:700;margin-top:2px;}
 .quiz-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;}
 .quiz-q{font-size:14px;font-weight:600;line-height:1.5;margin-bottom:14px;}
 .quiz-opts{display:flex;flex-direction:column;gap:7px;}
@@ -401,28 +425,70 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
 
   <!-- PLANNING -->
   <div class="page" id="page-planning">
-    <div class="plan-header"><div class="plan-title">📅 Planning</div><div class="plan-sub">Tes sessions de révision</div></div>
-    <div class="plan-tabs">
-      <button class="plan-tab active" onclick="showPlanTab('week1')" id="ptab-week1">Jeu–Dim</button>
-      <button class="plan-tab" onclick="showPlanTab('weekly')" id="ptab-weekly">Hebdo</button>
-      <button class="plan-tab" onclick="showPlanTab('custom')" id="ptab-custom">Mes tâches</button>
+    <div class="plan-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div class="plan-title">📅 Planning</div><div class="plan-sub">Tes sessions & rendez-vous</div></div>
+        <button onclick="openAddRdv()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:11px;padding:8px 13px;font-size:12px;font-weight:700;color:var(--bg);font-family:'Karla',sans-serif;cursor:pointer">＋ RDV</button>
+      </div>
+      <div class="plan-tabs" style="margin-top:10px;padding:0">
+        <button class="plan-tab active" onclick="showPlanTab('jour')" id="ptab-jour">📆 Jour</button>
+        <button class="plan-tab" onclick="showPlanTab('semaine')" id="ptab-semaine">📅 Semaine</button>
+        <button class="plan-tab" onclick="showPlanTab('mois')" id="ptab-mois">🗓️ Mois</button>
+        <button class="plan-tab" onclick="showPlanTab('taches')" id="ptab-taches">✅ Tâches</button>
+      </div>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--route)"></div>Route</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--english)"></div>Anglais</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--excel)"></div>Excel</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--html)"></div>HTML</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--python)"></div>Python</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--linux)"></div>Linux</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--cyber)"></div>Cyber</div>
+
+    <!-- VUE JOUR -->
+    <div class="plan-inner active" id="planpage-jour">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 0">
+        <button onclick="changeDay(-1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">‹</button>
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800" id="jourTitle">Aujourd'hui</div>
+          <div style="font-size:11px;color:var(--muted)" id="jourDate">—</div>
+        </div>
+        <button onclick="changeDay(1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">›</button>
+      </div>
+      <div class="progress-wrap" style="margin:10px 18px 0">
+        <div class="progress-label"><span id="progressLabel">Progression du jour</span><span id="progressText">0/0</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+      <div id="planpage-jour-content" style="padding-bottom:24px"></div>
     </div>
-    <div class="progress-wrap">
-      <div class="progress-label"><span id="progressLabel">Progression</span><span id="progressText">0/0</span></div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <!-- VUE SEMAINE -->
+    <div class="plan-inner" id="planpage-semaine">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 6px">
+        <button onclick="changeWeek(-1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">‹</button>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800" id="semaineTitle">Cette semaine</div>
+        <button onclick="changeWeek(1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">›</button>
+      </div>
+      <!-- Grille semaine -->
+      <div id="semaineGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 12px 8px"></div>
+      <!-- Liste des events du jour sélectionné -->
+      <div id="semaineDetail" style="padding:0 18px 24px"></div>
     </div>
-    <div class="plan-inner active" id="planpage-week1"></div>
-    <div class="plan-inner" id="planpage-weekly"></div>
-    <div class="plan-inner" id="planpage-custom"></div>
+
+    <!-- VUE MOIS -->
+    <div class="plan-inner" id="planpage-mois">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 6px">
+        <button onclick="changeMonth(-1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">‹</button>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800" id="moisTitle">—</div>
+        <button onclick="changeMonth(1)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 13px;color:var(--text);font-size:16px;cursor:pointer">›</button>
+      </div>
+      <!-- En-têtes jours -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 12px 4px">
+        ${['L','M','M','J','V','S','D'].map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:3px 0">${d}</div>`).join('')}
+      </div>
+      <!-- Grille mois -->
+      <div id="moisGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 12px 8px"></div>
+      <!-- Détail jour cliqué -->
+      <div id="moisDetail" style="padding:0 18px 24px"></div>
+    </div>
+
+    <!-- TÂCHES -->
+    <div class="plan-inner" id="planpage-taches" style="padding-bottom:24px">
+      <div id="planpage-custom"></div>
+    </div>
   </div>
 
   <!-- CHAT -->
@@ -907,97 +973,231 @@ function showPage(name){
   if(name==='rappels')renderRemindList();
   if(name==='settings')renderAllSettings();
   if(name==='birthdays')renderBirthdays();
-  if(name==='agent'){updateSocialBtns();renderAlarms();if(S.outlookToken){document.getElementById('outlookBanner').style.display='block';document.getElementById('outlookBtnTxt').textContent='Outlook ✅';renderOutlookEvents();}}
+  if(name==='planning'){if(currentPlanTab==='jour')renderJour();else if(currentPlanTab==='semaine')renderSemaine();else if(currentPlanTab==='mois')renderMois();}
+  if(name==='agent'){updateSocialBtns();renderAlarms();if(S.gcalToken){const b=document.getElementById('outlookBanner');if(b)b.style.display='block';const t=document.getElementById('outlookBtnTxt');if(t)t.textContent='📅 Google Cal ✅';renderOutlookEvents();}}
 }
 
 // ─── PLANNING ────────────────────────────────────────────
-function renderDays(days,containerId){
-  const c=document.getElementById(containerId);if(!c)return;
-  c.innerHTML='';
-  const now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
-  days.forEach((day,di)=>{
-    const sec=document.createElement('div');
-    sec.className='day-section'+(day.today?' day-today':'');
-    sec.style.animationDelay=(di*.05)+'s';
-    let html='';
-    day.blocks.forEach(block=>{
-      let sh='';
-      block.slots.forEach((slot,si)=>{
-        const key=day.id+'-'+block.label.slice(0,4)+si;
-        const isDone=!!S.planDone[key];
-        if(slot.type==='break'){
-          sh+=slot.time?`<div class="break-card">☕ ${slot.time} — Pause</div>`:`<div class="indispo-card">📌 ${slot.task||'Pas disponible'}</div>`;
-        } else {
-          let an=false;
-          if(day.today&&slot.time){const p=slot.time.match(/(\d+)h(\d+)–(\d+)h(\d+)/);if(p){const s=+p[1]*60+ +p[2],e=+p[3]*60+ +p[4];an=nowMin>=s&&nowMin<e;}}
-          sh+=`<div class="slot-card ${isDone?'done':''} ${an?'active-now':''}" onclick="togglePlanDone('${key}')">
-            <div class="slot-inner"><div class="slot-color c-${slot.type}"></div>
-            <div class="slot-body">
-              <div class="slot-time">${slot.time}${an?' 🟢':''}</div>
-              <div class="slot-icon">${slot.icon}</div>
-              <div class="slot-info"><div class="slot-subject">${slot.subject}</div><div class="slot-task">${isDone?'<s>'+slot.task+'</s>':slot.task}</div></div>
-              <span class="slot-tag t-${slot.type}">${slot.subject.split(' ')[0]}</span>
-              <div class="slot-check">${isDone?'✓':''}</div>
-            </div></div></div>`;
-        }
-      });
-      html+=`<div class="block-label">${block.label}</div>${sh}`;
-    });
-    sec.innerHTML=`<div class="day-header"><div class="day-name">${day.name}</div><div class="day-date">${day.date}</div></div>${html}`;
-    c.appendChild(sec);
+let currentPlanTab='jour';
+let currentJourOffset=0; // days from today
+let currentWeekOffset=0;
+let currentMonthOffset=0;
+let selectedWeekDay=null;
+let selectedMonthDay=null;
+
+// Get all events for a given date (YYYY-MM-DD)
+function getEventsForDate(dateStr){
+  const events=[];
+  // From planTasks
+  const dow=['dim','lun','mar','mer','jeu','ven','sam'];
+  const d=new Date(dateStr);
+  const dayCode=dow[d.getDay()];
+  S.planTasks.forEach(t=>{if(t.day===dayCode){events.push({id:'pt-'+t.id,title:t.name,time:String(t.h).padStart(2,'0')+':'+String(t.m).padStart(2,'0'),endTime:t.endH?String(t.endH).padStart(2,'0')+':'+String(t.endM||0).padStart(2,'0'):'',color:SUBJ_COLORS[t.subject]||'var(--accent)',icon:t.icon||'📚',source:'task'});}});
+  // From freeTasks (tous les jours ou jours spécifiques)
+  S.freeTasks.forEach(t=>{
+    if(!t.days||!t.days.length||t.days.includes(dayCode)){
+      if(t.h!==undefined)events.push({id:'ft-'+t.id,title:t.name,time:String(t.h).padStart(2,'0')+':'+String(t.m||0).padStart(2,'0'),color:SUBJ_COLORS[t.subject]||'var(--accent3)',icon:t.icon||'✅',source:'free'});
+    }
   });
+  // From Google Calendar
+  (S.outlookEvents||[]).forEach(ev=>{
+    const evDate=new Date(ev.start.dateTime||ev.start.date);
+    if(evDate.toDateString()===d.toDateString()){
+      events.push({id:'gcal-'+ev.subject,title:ev.subject,time:String(evDate.getHours()).padStart(2,'0')+':'+String(evDate.getMinutes()).padStart(2,'0'),color:'#4285f4',icon:'📅',source:'gcal'});
+    }
+  });
+  // From custom RDV
+  (S.rdvs||[]).forEach(r=>{
+    if(r.date===dateStr)events.push({id:'rdv-'+r.id,title:r.title,time:r.time||'',color:r.color||'var(--accent)',icon:r.icon||'📍',note:r.note,source:'rdv'});
+  });
+  return events.sort((a,b)=>a.time.localeCompare(b.time));
 }
 
-function renderCustomPlanTasks(){
-  const c=document.getElementById('planpage-custom');if(!c)return;
-  if(!S.planTasks.length){c.innerHTML=`<div style="padding:24px 18px;text-align:center;color:var(--muted);font-size:13px">Aucune tâche planning.<br><span style="color:var(--accent);cursor:pointer" onclick="showPage('settings');openAddPlanTask()">+ En ajouter dans Réglages</span></div>`;return;}
-  const DO=['lun','mar','mer','jeu','ven','sam','dim'],DN={lun:'Lundi',mar:'Mardi',mer:'Mercredi',jeu:'Jeudi',ven:'Vendredi',sam:'Samedi',dim:'Dimanche'};
-  c.innerHTML='';
-  DO.forEach(d=>{
-    const tasks=S.planTasks.filter(t=>t.day===d);if(!tasks.length)return;
-    const sec=document.createElement('div');sec.className='day-section';
-    let sh='';
-    tasks.sort((a,b)=>(a.h*60+a.m)-(b.h*60+b.m)).forEach(t=>{
-      const isDone=!!S.planDone['custom-'+t.id];
-      sh+=`<div class="slot-card ${isDone?'done':''}" onclick="togglePlanDone('custom-${t.id}')">
-        <div class="slot-inner"><div class="slot-color" style="background:${SUBJ_COLORS[t.subject]||'var(--accent)'}"></div>
-        <div class="slot-body">
-          <div class="slot-time">${String(t.h).padStart(2,'0')}h${String(t.m).padStart(2,'0')}${t.endH?'–'+String(t.endH).padStart(2,'0')+'h'+(t.endM?String(t.endM).padStart(2,'0'):'00'):''}</div>
-          <div class="slot-icon">${t.icon||'📚'}</div>
-          <div class="slot-info"><div class="slot-subject">${t.name}</div><div class="slot-task">${t.task||''}</div></div>
-          <div class="slot-check">${isDone?'✓':''}</div>
-        </div></div></div>`;
-    });
-    sec.innerHTML=`<div class="day-header"><div class="day-name">${DN[d]}</div></div>${sh}`;
-    c.appendChild(sec);
-  });
-}
+function dateToStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
-function togglePlanDone(key){
-  S.planDone[key]=!S.planDone[key];save();
-  if(currentPlanTab==='week1')renderDays(WEEK1,'planpage-week1');
-  else if(currentPlanTab==='weekly')renderDays(WEEKLY,'planpage-weekly');
-  else renderCustomPlanTasks();
+// ── VUE JOUR ──
+function renderJour(){
+  const now=new Date();
+  const target=new Date(now);
+  target.setDate(now.getDate()+currentJourOffset);
+  const dateStr=dateToStr(target);
+  const dayNames=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const monthNames=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const isToday=currentJourOffset===0;
+  document.getElementById('jourTitle').textContent=isToday?'Aujourd\'hui':currentJourOffset===1?'Demain':currentJourOffset===-1?'Hier':dayNames[target.getDay()];
+  document.getElementById('jourDate').textContent=target.getDate()+' '+monthNames[target.getMonth()]+' '+target.getFullYear();
+  const events=getEventsForDate(dateStr);
+  const c=document.getElementById('planpage-jour-content');
+  if(!events.length){c.innerHTML=`<div style="text-align:center;padding:32px 24px;color:var(--muted);font-size:13px">Aucun événement ce jour 😌<br><span style="color:var(--accent);cursor:pointer" onclick="openAddRdv()">＋ Ajouter un RDV</span></div>`;updateProgress();return;}
+  c.innerHTML=events.map(ev=>`<div class="rdv-card ${S.planDone['rdv-'+ev.id]?'done-rdv':''}" onclick="toggleRdvDone('${ev.id}')">
+    <div class="rdv-time-col"><div class="rdv-time">${ev.time.replace(':','h')}</div></div>
+    <div class="rdv-dot" style="background:${ev.color}"></div>
+    <div class="rdv-info">
+      <div class="rdv-title">${ev.icon} ${ev.title}</div>
+      ${ev.note?`<div class="rdv-sub">${ev.note}</div>`:''}
+      ${ev.source==='gcal'?'<div class="rdv-gcal">📅 Google Calendar</div>':''}
+    </div>
+    ${ev.source==='rdv'?`<button class="icon-btn del" style="flex:none" onclick="event.stopPropagation();deleteRdv('${ev.id.replace('rdv-','')}')" >🗑️</button>`:''}
+  </div>`).join('');
   updateProgress();
 }
+
+function changeDay(d){currentJourOffset+=d;renderJour();}
+function toggleRdvDone(id){S.planDone['rdv-'+id]=!S.planDone['rdv-'+id];save();renderJour();}
+
+// ── VUE SEMAINE ──
+function renderSemaine(){
+  const now=new Date();
+  const monday=new Date(now);
+  const day=now.getDay()||7;
+  monday.setDate(now.getDate()-day+1+currentWeekOffset*7);
+  const monthNames=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  document.getElementById('semaineTitle').textContent=monday.getDate()+' '+monthNames[monday.getMonth()]+' – '+sunday.getDate()+' '+monthNames[sunday.getMonth()];
+  const dayLabels=['L','M','M','J','V','S','D'];
+  const grid=document.getElementById('semaineGrid');
+  grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const dateStr=dateToStr(d);
+    const isToday=d.toDateString()===now.toDateString();
+    const hasEvents=getEventsForDate(dateStr).length>0;
+    const isSel=selectedWeekDay===dateStr;
+    const cell=document.createElement('div');
+    cell.className='week-cell'+(isToday?' today':'')+(isSel?' selected':'')+(hasEvents?' has-events':'');
+    cell.innerHTML=`<div style="font-size:10px;color:var(--muted);font-weight:700">${dayLabels[i]}</div><div style="font-size:14px;font-weight:800;color:${isToday?'var(--accent)':'var(--text)'}">${d.getDate()}</div>`;
+    cell.onclick=()=>{selectedWeekDay=dateStr;renderSemaine();renderSemaineDetail(dateStr);};
+    grid.appendChild(cell);
+  }
+  if(!selectedWeekDay)selectedWeekDay=dateToStr(now);
+  renderSemaineDetail(selectedWeekDay);
+}
+
+function renderSemaineDetail(dateStr){
+  const events=getEventsForDate(dateStr);
+  const d=new Date(dateStr);
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const monthNames=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const det=document.getElementById('semaineDetail');
+  det.innerHTML=`<div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;margin-bottom:10px;color:var(--muted)">${dayNames[d.getDay()]} ${d.getDate()} ${monthNames[d.getMonth()]}</div>`+
+    (events.length?events.map(ev=>`<div class="rdv-card">
+      <div class="rdv-time-col"><div class="rdv-time">${ev.time.replace(':','h')}</div></div>
+      <div class="rdv-dot" style="background:${ev.color}"></div>
+      <div class="rdv-info"><div class="rdv-title">${ev.icon} ${ev.title}</div>${ev.source==='gcal'?'<div class="rdv-gcal">📅 Google Calendar</div>':''}</div>
+    </div>`).join(''):'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Aucun événement</div>');
+}
+
+function changeWeek(d){currentWeekOffset+=d;selectedWeekDay=null;renderSemaine();}
+
+// ── VUE MOIS ──
+function renderMois(){
+  const now=new Date();
+  const ref=new Date(now.getFullYear(),now.getMonth()+currentMonthOffset,1);
+  const monthNames=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('moisTitle').textContent=monthNames[ref.getMonth()]+' '+ref.getFullYear();
+  const firstDay=(ref.getDay()||7)-1; // Monday=0
+  const daysInMonth=new Date(ref.getFullYear(),ref.getMonth()+1,0).getDate();
+  const grid=document.getElementById('moisGrid');
+  grid.innerHTML='';
+  // Blank cells before
+  for(let i=0;i<firstDay;i++){const e=document.createElement('div');e.className='cal-cell other-month';grid.appendChild(e);}
+  for(let d=1;d<=daysInMonth;d++){
+    const dateObj=new Date(ref.getFullYear(),ref.getMonth(),d);
+    const dateStr=dateToStr(dateObj);
+    const isToday=dateObj.toDateString()===now.toDateString();
+    const hasEvents=getEventsForDate(dateStr).length>0;
+    const isSel=selectedMonthDay===dateStr;
+    const cell=document.createElement('div');
+    cell.className='cal-cell'+(isToday?' today':'')+(isSel?' selected':'')+(hasEvents?' has-events':'');
+    cell.innerHTML=`<div class="cal-day-num">${d}</div>`;
+    cell.onclick=()=>{selectedMonthDay=dateStr;renderMois();renderMoisDetail(dateStr);};
+    grid.appendChild(cell);
+  }
+  if(selectedMonthDay)renderMoisDetail(selectedMonthDay);
+}
+
+function renderMoisDetail(dateStr){
+  const events=getEventsForDate(dateStr);
+  const d=new Date(dateStr);
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const monthNames=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const det=document.getElementById('moisDetail');
+  det.innerHTML=`<div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;margin:10px 0 8px;color:var(--muted)">${dayNames[d.getDay()]} ${d.getDate()} ${monthNames[d.getMonth()]}</div>`+
+    (events.length?events.map(ev=>`<div class="rdv-card">
+      <div class="rdv-time-col"><div class="rdv-time">${ev.time.replace(':','h')}</div></div>
+      <div class="rdv-dot" style="background:${ev.color}"></div>
+      <div class="rdv-info"><div class="rdv-title">${ev.icon} ${ev.title}</div>${ev.source==='gcal'?'<div class="rdv-gcal">📅 Google Calendar</div>':''}</div>
+    </div>`).join(''):'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Aucun événement</div>');
+}
+
+function changeMonth(d){currentMonthOffset+=d;selectedMonthDay=null;renderMois();}
+
+// ── AJOUTER RDV ──
+function openAddRdv(){
+  const now=new Date();
+  const target=new Date(now);target.setDate(now.getDate()+currentJourOffset);
+  const dateStr=dateToStr(target);
+  openModal('📍 Nouveau RDV',`
+    <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="rdvTitle" placeholder="Ex: Médecin, Réunion..."></div>
+    <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="rdvDate" type="date" value="${dateStr}"></div>
+    <div class="form-group"><label class="form-label">Heure</label><input class="form-input" id="rdvTime" type="time"></div>
+    <div class="form-group"><label class="form-label">Note (optionnel)</label><input class="form-input" id="rdvNote" placeholder="Ex: Apporter carte vitale"></div>
+    <div class="form-group"><label class="form-label">Couleur</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['var(--accent)','var(--accent2)','var(--accent3)','var(--danger)','var(--cyber)','var(--route)'].map((c,i)=>`<div onclick="selectRdvColor(this,'${c}')" style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent" data-color="${c}"></div>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveRdv()">＋ Ajouter le RDV</button>
+  `);
+  setTimeout(()=>{if(document.querySelector('[data-color]'))selectRdvColor(document.querySelector('[data-color]'),'var(--accent)');},100);
+}
+let selectedRdvColor='var(--accent)';
+function selectRdvColor(el,color){selectedRdvColor=color;document.querySelectorAll('[data-color]').forEach(d=>d.style.borderColor='transparent');el.style.borderColor='white';}
+function saveRdv(){
+  const title=document.getElementById('rdvTitle').value.trim();
+  const date=document.getElementById('rdvDate').value;
+  const time=document.getElementById('rdvTime').value;
+  const note=document.getElementById('rdvNote').value.trim();
+  if(!title||!date){showToast('⚠️','Titre et date requis !');return;}
+  if(!S.rdvs)S.rdvs=[];
+  S.rdvs.push({id:uid(),title,date,time,note,color:selectedRdvColor,icon:'📍'});
+  save();closeModal();
+  renderJour();renderSemaine();renderMois();
+  showToast('✅','RDV ajouté !');
+  // Auto-create alarm if time set
+  if(time){
+    const [h,m]=time.split(':').map(Number);
+    if(!S.alarms)S.alarms=[];
+    S.alarms.push({id:uid(),h,m,label:'RDV : '+title+' ('+date+')',active:true});
+    save();renderAlarms();
+    showToast('⏰','Alarme créée pour ce RDV !');
+  }
+}
+function deleteRdv(id){S.rdvs=(S.rdvs||[]).filter(r=>r.id!==id);save();renderJour();showToast('🗑️','RDV supprimé');}
 
 function showPlanTab(tab){
   currentPlanTab=tab;
   document.querySelectorAll('.plan-inner').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.plan-tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('planpage-'+tab).classList.add('active');
+  const inner=document.getElementById('planpage-'+tab);
+  if(inner)inner.classList.add('active');
   document.getElementById('ptab-'+tab).classList.add('active');
-  if(tab==='custom')renderCustomPlanTasks();
-  updateProgress();
+  if(tab==='jour')renderJour();
+  else if(tab==='semaine')renderSemaine();
+  else if(tab==='mois')renderMois();
+  else if(tab==='taches')renderCustomPlanTasks();
 }
 
 function updateProgress(){
-  let total=0,count=0;
-  const data=currentPlanTab==='week1'?WEEK1:currentPlanTab==='weekly'?WEEKLY:null;
-  if(data){data.forEach(day=>day.blocks.forEach(block=>block.slots.forEach((slot,si)=>{if(slot.type!=='break'){total++;const key=day.id+'-'+block.label.slice(0,4)+si;if(S.planDone[key])count++;}})));}
-  else{S.planTasks.forEach(t=>{total++;if(S.planDone['custom-'+t.id])count++;});}
-  const pct=total?Math.round(count/total*100):0;
-  document.getElementById('progressFill').style.width=pct+'%';
+  const events=getEventsForDate(dateToStr(new Date()));
+  const total=events.length;
+  const done=events.filter(ev=>S.planDone['rdv-'+ev.id]).length;
+  const pct=total?Math.round(done/total*100):0;
+  const pf=document.getElementById('progressFill');
+  const pt=document.getElementById('progressText');
+  if(pf)pf.style.width=pct+'%';
+  if(pt)pt.textContent=done+'/'+total;
+}
   document.getElementById('progressText').textContent=count+'/'+total;
 }
 
@@ -1835,8 +2035,7 @@ renderBirthdays();
 updateSocialBtns();
 renderAlarms();
 renderMedGrid();renderTaskRow();renderLogs();
-renderDays(WEEK1,'planpage-week1');
-renderDays(WEEKLY,'planpage-weekly');
+renderJour();
 renderCustomPlanTasks();
 updateProgress();renderRemindList();
 updateClock();setInterval(updateClock,1000);
