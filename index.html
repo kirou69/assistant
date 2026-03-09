@@ -1503,90 +1503,59 @@ function flipFlashcard(el){
   else{ans.style.display='none';if(hint)hint.style.display='block';}
 }
 
-// ─── OUTLOOK SYNC ────────────────────────────────────────
-const MSAL_CLIENT_ID='49382ce7-1ab1-4174-99d2-a913fc6a9b16';
-const MSAL_REDIRECT='https://kirou69.github.io/assistant/';
-const MSAL_SCOPES=['Calendars.Read','User.Read'];
-let msalToken=null;
+// ─── GOOGLE CALENDAR SYNC ────────────────────────────────
+const GCAL_CLIENT_ID='49588820988-mn8bda37ftgtsqjvl7500m9c3v7i9uem.apps.googleusercontent.com';
+const GCAL_SCOPE='https://www.googleapis.com/auth/calendar.readonly';
+const GCAL_REDIRECT='https://kirou69.github.io/assistant/';
+let gcalToken=null;
 
 function toggleOutlook(){
-  if(msalToken||S.outlookToken){
-    disconnectOutlook();
-  } else {
-    connectOutlook();
-  }
+  if(gcalToken||S.gcalToken){disconnectGcal();}
+  else{connectGcal();}
 }
 
-function connectOutlook(){
-  const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&prompt=select_account`;
-  openModal('📅 Connecter Outlook',`
-    <div style="font-size:13px;line-height:1.7;margin-bottom:14px;color:var(--muted)">
-      <strong style="color:var(--text)">Étape 1 :</strong> Copie ce lien 👇<br>
-      <strong style="color:var(--text)">Étape 2 :</strong> Ouvre un nouvel onglet Chrome et colle-le<br>
-      <strong style="color:var(--text)">Étape 3 :</strong> Connecte-toi à Microsoft<br>
-      <strong style="color:var(--text)">Étape 4 :</strong> Copie l'URL complète après redirection<br>
-      <strong style="color:var(--text)">Étape 5 :</strong> Reviens ici et colle-la en bas
+function connectGcal(){
+  const authUrl=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${GCAL_CLIENT_ID}&redirect_uri=${encodeURIComponent(GCAL_REDIRECT)}&response_type=token&scope=${encodeURIComponent(GCAL_SCOPE)}&prompt=select_account`;
+  openModal('📅 Connecter Google Calendar',`
+    <div style="background:rgba(66,133,244,.1);border:1px solid rgba(66,133,244,.3);border-radius:12px;padding:13px;margin-bottom:14px;font-size:13px;line-height:1.9">
+      <strong>Comment faire :</strong><br>
+      1️⃣ Appuie sur <strong style="color:var(--accent)">"📋 Copier le lien"</strong><br>
+      2️⃣ Ouvre Chrome → barre d'adresse → colle → Entrée<br>
+      3️⃣ Connecte-toi à Google ✅<br>
+      4️⃣ Tu es redirigé → copie l'URL complète<br>
+      5️⃣ Reviens ici → colle l'URL → Valider
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:10px;word-break:break-all;color:var(--accent2);margin-bottom:8px;line-height:1.5" id="outlookAuthUrl">${authUrl}</div>
-    <button class="btn btn-ghost" style="margin-bottom:14px;font-size:12px" onclick="navigator.clipboard.writeText(document.getElementById('outlookAuthUrl').textContent).then(()=>showToast('📋','Lien copié !'))">📋 Copier le lien</button>
+    <button class="btn btn-primary" style="margin-bottom:10px" onclick="navigator.clipboard.writeText('${authUrl}').then(()=>showToast('📋','Lien copié ! Ouvre Chrome et colle-le dans la barre d adresse'))">📋 Copier le lien Google</button>
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Colle l'URL de retour ici :</div>
-    <textarea class="form-textarea" id="outlookUrlPaste" placeholder="https://kirou69.github.io/assistant/#access_token=..." style="height:70px;font-size:11px;margin-bottom:8px"></textarea>
-    <button class="btn btn-primary" onclick="parseOutlookUrl()">✅ Valider et connecter</button>
+    <textarea class="form-textarea" id="gcalUrlPaste" placeholder="https://kirou69.github.io/assistant/#access_token=..." style="height:65px;font-size:11px;margin-bottom:8px"></textarea>
+    <button class="btn btn-ghost" onclick="parseGcalUrl()">✅ Valider et connecter</button>
   `);
 }
 
-function checkOutlookManual(){
-  // Check if token came back in URL hash
-  const hash=window.location.hash;
-  if(hash&&hash.includes('access_token')){
-    const params=new URLSearchParams(hash.slice(1));
-    const token=params.get('access_token');
-    if(token){
-      msalToken=token;S.outlookToken=token;save();
-      window.history.replaceState(null,null,window.location.pathname);
-      closeModal();
-      showToast('✅','Outlook connecté !');
-      document.getElementById('outlookBtnTxt').textContent='Outlook ✅';
-      document.getElementById('outlookBanner').style.display='block';
-      syncOutlook();
-      return;
-    }
-  }
-  // Token not yet in URL — ask user to paste it
-  openModal('📅 Finaliser la connexion',`
-    <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-      Après connexion Microsoft, tu as été redirigé vers l'appli.<br>
-      <strong style="color:var(--text)">Copie l'URL complète</strong> de ton navigateur et colle-la ici :
-    </div>
-    <textarea class="form-textarea" id="outlookUrlPaste" placeholder="https://kirou69.github.io/assistant/#access_token=..." style="height:80px;margin-bottom:10px;font-size:11px"></textarea>
-    <button class="btn btn-primary" onclick="parseOutlookUrl()">✅ Valider</button>
-  `);
-}
-
-function parseOutlookUrl(){
-  const raw=document.getElementById('outlookUrlPaste').value.trim();
+function parseGcalUrl(){
+  const raw=(document.getElementById('gcalUrlPaste').value||'').trim();
   try{
     const hashPart=raw.includes('#')?raw.split('#')[1]:'';
     const params=new URLSearchParams(hashPart);
     const token=params.get('access_token');
     if(token){
-      msalToken=token;S.outlookToken=token;save();
+      gcalToken=token;S.gcalToken=token;save();
       closeModal();
-      showToast('✅','Outlook connecté !');
-      document.getElementById('outlookBtnTxt').textContent='Outlook ✅';
+      showToast('✅','Google Calendar connecté !');
+      document.getElementById('outlookBtnTxt').textContent='📅 Google Cal ✅';
       document.getElementById('outlookBanner').style.display='block';
       syncOutlook();
     } else {
-      showToast('❌','Token non trouvé dans l\'URL');
+      showToast('❌','Token non trouvé — copie bien toute l\'URL');
     }
   }catch(e){showToast('❌','URL invalide');}
 }
 
-function disconnectOutlook(){
-  msalToken=null;S.outlookToken=null;S.outlookEvents=[];save();
-  document.getElementById('outlookBanner').style.display='none';
-  document.getElementById('outlookBtnTxt').textContent='Connecter Outlook';
-  showToast('👋','Outlook déconnecté');
+function disconnectGcal(){
+  gcalToken=null;S.gcalToken=null;S.outlookEvents=[];save();
+  const b=document.getElementById('outlookBanner');if(b)b.style.display='none';
+  const t=document.getElementById('outlookBtnTxt');if(t)t.textContent='Google Cal';
+  showToast('👋','Google Calendar déconnecté');
 }
 
 function checkOutlookCallback(){
@@ -1595,53 +1564,53 @@ function checkOutlookCallback(){
     const params=new URLSearchParams(hash.slice(1));
     const token=params.get('access_token');
     if(token){
-      msalToken=token;S.outlookToken=token;save();
+      gcalToken=token;S.gcalToken=token;save();
       window.history.replaceState(null,null,window.location.pathname);
-      showToast('✅','Outlook connecté !');
+      showToast('✅','Google Calendar connecté !');
+      const t=document.getElementById('outlookBtnTxt');if(t)t.textContent='📅 Google Cal ✅';
+      const b=document.getElementById('outlookBanner');if(b)b.style.display='block';
       syncOutlook();
     }
   }
 }
 
 async function syncOutlook(){
-  const token=msalToken||S.outlookToken;
-  if(!token){showToast('⚠️','Connecte Outlook d\'abord');return;}
+  const token=gcalToken||S.gcalToken;
+  if(!token){showToast('⚠️','Connecte Google Calendar d\'abord');return;}
   const btn=document.getElementById('outlookBtnTxt');
   if(btn)btn.textContent='Sync...';
   try{
     const now=new Date();
     const end=new Date(now.getTime()+7*24*60*60*1000);
-    const url=`https://graph.microsoft.com/v1.0/me/calendarview?startDateTime=${now.toISOString()}&endDateTime=${end.toISOString()}&$orderby=start/dateTime&$top=10&$select=subject,start,end,location`;
+    const url=`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now.toISOString()}&timeMax=${end.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=10`;
     const resp=await fetch(url,{headers:{Authorization:'Bearer '+token}});
-    if(resp.status===401){disconnectOutlook();showToast('🔑','Session expirée, reconnecte Outlook');return;}
+    if(resp.status===401){disconnectGcal();showToast('🔑','Session expirée, reconnecte Google Calendar');return;}
     const data=await resp.json();
-    S.outlookEvents=data.value||[];save();
-    renderOutlookEvents();
-    if(btn)btn.textContent='Outlook ✅';
-    document.getElementById('outlookBanner').style.display='block';
-    showToast('✅','Outlook synchronisé !');
-    // Auto-create tasks from events
+    S.outlookEvents=(data.items||[]).map(ev=>({subject:ev.summary||'Événement',start:{dateTime:ev.start.dateTime||ev.start.date},end:{dateTime:ev.end?.dateTime||ev.end?.date}}));
+    save();renderOutlookEvents();
+    if(btn)btn.textContent='📅 Google Cal ✅';
+    const b=document.getElementById('outlookBanner');if(b)b.style.display='block';
+    showToast('✅','Google Calendar synchronisé !');
     S.outlookEvents.forEach(ev=>{
-      const start=new Date(ev.start.dateTime||ev.start.date);
-      const id='outlook-'+btoa(ev.subject+ev.start.dateTime).slice(0,12);
+      const start=new Date(ev.start.dateTime);
+      const id='gcal-'+btoa(ev.subject+ev.start.dateTime).slice(0,12);
       if(!S.freeTasks.find(t=>t.id===id)){
-        S.freeTasks.push({id,icon:'📅',name:ev.subject,timeStr:start.getHours()+'h'+String(start.getMinutes()).padStart(2,'0'),h:start.getHours(),m:start.getMinutes(),subject:'autre',days:[],fromOutlook:true});
+        S.freeTasks.push({id,icon:'📅',name:ev.subject,timeStr:String(start.getHours()).padStart(2,'0')+'h'+String(start.getMinutes()).padStart(2,'0'),h:start.getHours(),m:start.getMinutes(),subject:'autre',days:[],fromGcal:true});
       }
     });
     save();renderTaskRow();
-  }catch(e){showToast('❌','Erreur sync Outlook');if(btn)btn.textContent='Outlook';}
+  }catch(e){showToast('❌','Erreur sync');if(btn)btn.textContent='Google Cal';}
 }
 
 function renderOutlookEvents(){
-  const container=document.getElementById('outlookEvents');
-  if(!container)return;
+  const container=document.getElementById('outlookEvents');if(!container)return;
   const events=S.outlookEvents||[];
   if(!events.length){container.innerHTML='<div style="font-size:12px;color:var(--muted)">Aucun événement à venir</div>';return;}
   const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   container.innerHTML=events.slice(0,5).map(ev=>{
     const start=new Date(ev.start.dateTime||ev.start.date);
     const ts=String(start.getHours()).padStart(2,'0')+'h'+String(start.getMinutes()).padStart(2,'0');
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(0,120,212,.1);border-radius:8px">
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(66,133,244,.12);border-radius:8px">
       <div style="font-size:11px;color:#7eb8f7;min-width:52px">${days[start.getDay()]} ${ts}</div>
       <div style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.subject}</div>
     </div>`;
