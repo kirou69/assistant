@@ -1520,12 +1520,18 @@ function toggleOutlook(){
 function connectOutlook(){
   const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&prompt=select_account`;
   openModal('📅 Connecter Outlook',`
-    <div style="background:rgba(0,120,212,.1);border:1px solid rgba(0,120,212,.3);border-radius:12px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.7;color:var(--muted)">
-      ℹ️ L'appli PWA ne peut pas ouvrir Microsoft directement.<br>
-      <strong style="color:var(--text)">Appuie sur le bouton ci-dessous</strong> pour ouvrir dans Chrome, connecte-toi, puis reviens ici et appuie sur "J'ai connecté Outlook".
+    <div style="font-size:13px;line-height:1.7;margin-bottom:14px;color:var(--muted)">
+      <strong style="color:var(--text)">Étape 1 :</strong> Copie ce lien 👇<br>
+      <strong style="color:var(--text)">Étape 2 :</strong> Ouvre un nouvel onglet Chrome et colle-le<br>
+      <strong style="color:var(--text)">Étape 3 :</strong> Connecte-toi à Microsoft<br>
+      <strong style="color:var(--text)">Étape 4 :</strong> Copie l'URL complète après redirection<br>
+      <strong style="color:var(--text)">Étape 5 :</strong> Reviens ici et colle-la en bas
     </div>
-    <a href="${authUrl}" target="_blank" style="display:block;background:linear-gradient(135deg,#0078d4,#106ebe);color:white;text-align:center;padding:14px;border-radius:13px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:10px">🔗 Ouvrir la connexion Microsoft</a>
-    <button class="btn btn-ghost" style="font-size:13px" onclick="checkOutlookManual()">✅ J'ai connecté Outlook</button>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:10px;word-break:break-all;color:var(--accent2);margin-bottom:8px;line-height:1.5" id="outlookAuthUrl">${authUrl}</div>
+    <button class="btn btn-ghost" style="margin-bottom:14px;font-size:12px" onclick="navigator.clipboard.writeText(document.getElementById('outlookAuthUrl').textContent).then(()=>showToast('📋','Lien copié !'))">📋 Copier le lien</button>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Colle l'URL de retour ici :</div>
+    <textarea class="form-textarea" id="outlookUrlPaste" placeholder="https://kirou69.github.io/assistant/#access_token=..." style="height:70px;font-size:11px;margin-bottom:8px"></textarea>
+    <button class="btn btn-primary" onclick="parseOutlookUrl()">✅ Valider et connecter</button>
   `);
 }
 
