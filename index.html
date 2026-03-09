@@ -1519,13 +1519,61 @@ function toggleOutlook(){
 
 function connectOutlook(){
   const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&prompt=select_account`;
-  // Create a temporary link and click it — works reliably on Android PWA
-  const a=document.createElement('a');
-  a.href=authUrl;
-  a.target='_self';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  openModal('📅 Connecter Outlook',`
+    <div style="background:rgba(0,120,212,.1);border:1px solid rgba(0,120,212,.3);border-radius:12px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.7;color:var(--muted)">
+      ℹ️ L'appli PWA ne peut pas ouvrir Microsoft directement.<br>
+      <strong style="color:var(--text)">Appuie sur le bouton ci-dessous</strong> pour ouvrir dans Chrome, connecte-toi, puis reviens ici et appuie sur "J'ai connecté Outlook".
+    </div>
+    <a href="${authUrl}" target="_blank" style="display:block;background:linear-gradient(135deg,#0078d4,#106ebe);color:white;text-align:center;padding:14px;border-radius:13px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:10px">🔗 Ouvrir la connexion Microsoft</a>
+    <button class="btn btn-ghost" style="font-size:13px" onclick="checkOutlookManual()">✅ J'ai connecté Outlook</button>
+  `);
+}
+
+function checkOutlookManual(){
+  // Check if token came back in URL hash
+  const hash=window.location.hash;
+  if(hash&&hash.includes('access_token')){
+    const params=new URLSearchParams(hash.slice(1));
+    const token=params.get('access_token');
+    if(token){
+      msalToken=token;S.outlookToken=token;save();
+      window.history.replaceState(null,null,window.location.pathname);
+      closeModal();
+      showToast('✅','Outlook connecté !');
+      document.getElementById('outlookBtnTxt').textContent='Outlook ✅';
+      document.getElementById('outlookBanner').style.display='block';
+      syncOutlook();
+      return;
+    }
+  }
+  // Token not yet in URL — ask user to paste it
+  openModal('📅 Finaliser la connexion',`
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      Après connexion Microsoft, tu as été redirigé vers l'appli.<br>
+      <strong style="color:var(--text)">Copie l'URL complète</strong> de ton navigateur et colle-la ici :
+    </div>
+    <textarea class="form-textarea" id="outlookUrlPaste" placeholder="https://kirou69.github.io/assistant/#access_token=..." style="height:80px;margin-bottom:10px;font-size:11px"></textarea>
+    <button class="btn btn-primary" onclick="parseOutlookUrl()">✅ Valider</button>
+  `);
+}
+
+function parseOutlookUrl(){
+  const raw=document.getElementById('outlookUrlPaste').value.trim();
+  try{
+    const hashPart=raw.includes('#')?raw.split('#')[1]:'';
+    const params=new URLSearchParams(hashPart);
+    const token=params.get('access_token');
+    if(token){
+      msalToken=token;S.outlookToken=token;save();
+      closeModal();
+      showToast('✅','Outlook connecté !');
+      document.getElementById('outlookBtnTxt').textContent='Outlook ✅';
+      document.getElementById('outlookBanner').style.display='block';
+      syncOutlook();
+    } else {
+      showToast('❌','Token non trouvé dans l\'URL');
+    }
+  }catch(e){showToast('❌','URL invalide');}
 }
 
 function disconnectOutlook(){
