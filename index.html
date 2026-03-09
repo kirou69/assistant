@@ -531,22 +531,66 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
 
   <!-- AGENT IA -->
   <div class="page" id="page-agent">
-    <div class="page-header"><div class="page-h-title">🤖 Agent IA</div><div class="page-h-sub">Ton assistant intelligent</div></div>
-    <div style="padding:12px 18px;display:flex;flex-direction:column;gap:10px">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div class="page-h-title">🤖 Agent IA</div><div class="page-h-sub">Ton assistant intelligent</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="icon-btn" id="outlookBtn" onclick="toggleOutlook()" style="width:auto;padding:6px 10px;font-size:11px;font-weight:700;gap:4px;display:flex;align-items:center">📅 <span id="outlookBtnTxt">Outlook</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outlook Banner -->
+    <div id="outlookBanner" style="display:none;margin:10px 18px 0;background:linear-gradient(135deg,rgba(0,120,212,.15),rgba(126,184,247,.08));border:1px solid rgba(0,120,212,.4);border-radius:14px;padding:13px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#7eb8f7">📅 Outlook connecté</div>
+        <button onclick="syncOutlook()" style="background:rgba(0,120,212,.2);border:1px solid rgba(0,120,212,.4);border-radius:8px;padding:4px 10px;font-size:11px;color:#7eb8f7;cursor:pointer;font-family:'Karla',sans-serif;font-weight:700">🔄 Sync</button>
+      </div>
+      <div id="outlookEvents" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+
+    <!-- Agent Chat IA -->
+    <div style="margin:10px 18px 0;background:var(--card);border:1px solid var(--accent);border-radius:16px;overflow:hidden">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800">🤖 Agent — Parle-lui !</div>
+        <button onclick="analyzeSchedule()" style="background:rgba(244,200,122,.12);border:1px solid rgba(244,200,122,.3);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--accent);cursor:pointer;font-family:'Karla',sans-serif;font-weight:700">📊 Analyser mon planning</button>
+      </div>
+      <div id="agentMessages" style="height:200px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div class="msg assistant"><div class="msg-bubble" style="font-size:12px">Bonjour ! 👋 Je peux créer, modifier ou supprimer tes tâches, analyser ton planning et t'envoyer des alarmes. Dis-moi ce que tu veux faire !</div></div>
+      </div>
+      <div style="display:flex;gap:7px;padding:8px 12px;border-top:1px solid var(--border)">
+        <input class="chat-input" id="agentInput" placeholder="Ex: Crée une tâche Python demain à 14h..." style="font-size:13px" onkeydown="if(event.key==='Enter')sendAgentMessage()">
+        <button class="send-btn" onclick="sendAgentMessage()" style="width:36px;height:36px;font-size:15px">➤</button>
+      </div>
+      <!-- Quick actions -->
+      <div style="display:flex;gap:5px;padding:0 12px 10px;overflow-x:auto">
+        <button class="chip" onclick="agentQuick('Analyse mon planning et dis-moi si je suis surchargé')">📊 Surchargé ?</button>
+        <button class="chip" onclick="agentQuick('Quelles tâches ai-je aujourd\'hui ?')">📋 Tâches du jour</button>
+        <button class="chip" onclick="agentQuick('Réorganise mon planning de la semaine')">🔄 Réorganiser</button>
+        <button class="chip" onclick="agentQuick('Crée une alarme pour demain matin à 7h')">⏰ Alarme</button>
+      </div>
+    </div>
+
+    <div style="padding:10px 18px;display:flex;flex-direction:column;gap:10px">
+
+      <!-- Alarmes -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:10px">⏰ Alarmes & Réveils</div>
+        <div id="alarmsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="alarmTime" type="time" style="flex:1">
+          <input class="form-input" id="alarmLabel" placeholder="Label..." style="flex:2">
+          <button class="btn btn-primary" style="flex:none;padding:11px 14px;width:auto" onclick="addAlarm()">＋</button>
+        </div>
+      </div>
 
       <!-- Réseaux sociaux -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:12px">📱 Mes réseaux</div>
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="social-btn" id="btn-youtube" onclick="openSocial('youtube')">
-            <span style="font-size:24px">▶️</span><span>YouTube</span>
-          </button>
-          <button class="social-btn" id="btn-whatsapp" onclick="openSocial('whatsapp')">
-            <span style="font-size:24px">💬</span><span>WhatsApp</span>
-          </button>
-          <button class="social-btn" id="btn-facebook" onclick="openSocial('facebook')">
-            <span style="font-size:24px">👥</span><span>Facebook</span>
-          </button>
+          <button class="social-btn" id="btn-youtube" onclick="openSocial('youtube')"><span style="font-size:22px">▶️</span><span>YouTube</span></button>
+          <button class="social-btn" id="btn-whatsapp" onclick="openSocial('whatsapp')"><span style="font-size:22px">💬</span><span>WhatsApp</span></button>
+          <button class="social-btn" id="btn-facebook" onclick="openSocial('facebook')"><span style="font-size:22px">👥</span><span>Facebook</span></button>
         </div>
         <button class="add-btn" onclick="openSocialLinks()" style="font-size:12px;padding:9px">⚙️ Configurer mes liens</button>
       </div>
@@ -554,23 +598,21 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
       <!-- Générateur de posts -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:10px">✍️ Générateur de posts</div>
-        <div class="form-group" style="margin-bottom:8px">
-          <select class="form-select" id="postNetwork">
-            <option value="youtube">YouTube (description)</option>
-            <option value="whatsapp">WhatsApp (message)</option>
-            <option value="facebook">Facebook (post)</option>
-          </select>
-        </div>
-        <textarea class="form-textarea" id="postTopic" placeholder="Sujet du post... Ex: Partager mon avancement en Python" style="margin-bottom:8px"></textarea>
+        <select class="form-select" id="postNetwork" style="margin-bottom:8px">
+          <option value="youtube">YouTube (description)</option>
+          <option value="whatsapp">WhatsApp (message)</option>
+          <option value="facebook">Facebook (post)</option>
+        </select>
+        <textarea class="form-textarea" id="postTopic" placeholder="Sujet du post..." style="margin-bottom:8px"></textarea>
         <button class="btn btn-primary" onclick="generatePost()" id="postBtn">✨ Générer</button>
         <div id="postResult" style="display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
-        <div id="postActions" style="display:none;margin-top:8px;display:none;gap:8px">
+        <div id="postActions" style="display:none;margin-top:8px;gap:8px">
           <button class="btn btn-ghost" style="flex:1;font-size:12px;padding:9px" onclick="copyPost()">📋 Copier</button>
           <button class="btn btn-ghost" style="flex:1;font-size:12px;padding:9px" onclick="sharePost()">↗️ Partager</button>
         </div>
       </div>
 
-      <!-- Résumeur d'articles -->
+      <!-- Résumeur -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:10px">📰 Résumer un article</div>
         <textarea class="form-textarea" id="articleText" placeholder="Colle le texte de l'article ici..." style="margin-bottom:8px;height:90px"></textarea>
@@ -578,20 +620,18 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
         <div id="sumResult" style="display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:13px;line-height:1.7"></div>
       </div>
 
-      <!-- Flashcards / Quiz -->
+      <!-- Quiz & Flashcards -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:24px">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:10px">🎯 Quiz & Flashcards</div>
-        <div class="form-group" style="margin-bottom:8px">
-          <select class="form-select" id="quizSubject">
-            <option value="Code de la route">🚗 Code de la route</option>
-            <option value="Anglais">🇬🇧 Anglais</option>
-            <option value="Excel">📊 Excel</option>
-            <option value="HTML/CSS">🌐 HTML/CSS</option>
-            <option value="Python">🐍 Python</option>
-            <option value="Linux">🖥️ Linux</option>
-            <option value="Cybersécurité">🔐 Cybersécurité</option>
-          </select>
-        </div>
+        <select class="form-select" id="quizSubject" style="margin-bottom:8px">
+          <option value="Code de la route">🚗 Code de la route</option>
+          <option value="Anglais">🇬🇧 Anglais</option>
+          <option value="Excel">📊 Excel</option>
+          <option value="HTML/CSS">🌐 HTML/CSS</option>
+          <option value="Python">🐍 Python</option>
+          <option value="Linux">🖥️ Linux</option>
+          <option value="Cybersécurité">🔐 Cybersécurité</option>
+        </select>
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="btn btn-primary" style="flex:1;font-size:13px" onclick="startQuiz()">🎯 Quiz</button>
           <button class="btn btn-ghost" style="flex:1;font-size:13px" onclick="startFlashcard()">🃏 Flashcard</button>
@@ -607,7 +647,7 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
 <div class="bottom-nav">
   <button class="nav-btn active" id="nav-home" onclick="showPage('home')"><span class="nav-icon">🏠</span>Accueil</button>
   <button class="nav-btn" id="nav-planning" onclick="showPage('planning')"><span class="nav-icon">📅</span>Planning</button>
-  <button class="nav-btn" id="nav-agent" onclick="showPage('agent')"><span class="nav-icon">🤖</span>Agent</button>
+  <button class="nav-btn" id="nav-agent" onclick="showPage('agent')"><span class="nav-icon">🤖</span>Agent IA</button>
   <button class="nav-btn" id="nav-birthdays" onclick="showPage('birthdays')"><span class="nav-icon">🎂</span>Anniv<span class="nav-badge" id="bdayBadge" style="display:none">!</span></button>
   <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><span class="nav-icon">⚙️</span>Réglages</button>
 </div>
@@ -739,6 +779,7 @@ function updateClock(){
   const today=now.toDateString();
   if(S.lastReset!==today){S.lastReset=today;S.medTaken={};S.taskDone={};S.firedReminders={};S.logs=[];save();renderMedGrid();renderTaskRow();renderLogs();}
   fireReminders(now);updateNextReminder(now);updateHomeReminderBanner(h);
+  checkAlarms(now);
 }
 
 function allReminders(){
@@ -866,7 +907,7 @@ function showPage(name){
   if(name==='rappels')renderRemindList();
   if(name==='settings')renderAllSettings();
   if(name==='birthdays')renderBirthdays();
-  if(name==='agent')updateSocialBtns();
+  if(name==='agent'){updateSocialBtns();renderAlarms();if(S.outlookToken){document.getElementById('outlookBanner').style.display='block';document.getElementById('outlookBtnTxt').textContent='Outlook ✅';renderOutlookEvents();}}
 }
 
 // ─── PLANNING ────────────────────────────────────────────
@@ -1462,6 +1503,251 @@ function flipFlashcard(el){
   else{ans.style.display='none';if(hint)hint.style.display='block';}
 }
 
+// ─── OUTLOOK SYNC ────────────────────────────────────────
+const MSAL_CLIENT_ID='49382ce7-1ab1-4174-99d2-a913fc6a9b16';
+const MSAL_REDIRECT='https://kirou69.github.io/assistant-kiru/';
+const MSAL_SCOPES=['Calendars.Read','User.Read'];
+let msalToken=null;
+
+function toggleOutlook(){
+  if(msalToken||S.outlookToken){
+    disconnectOutlook();
+  } else {
+    connectOutlook();
+  }
+}
+
+function connectOutlook(){
+  const authUrl=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${MSAL_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(MSAL_REDIRECT)}&scope=${encodeURIComponent(MSAL_SCOPES.join(' '))}&response_mode=fragment&state=outlook`;
+  // Store that we're doing an Outlook login
+  sessionStorage.setItem('outlookPending','1');
+  window.location.href=authUrl;
+}
+
+function disconnectOutlook(){
+  msalToken=null;S.outlookToken=null;S.outlookEvents=[];save();
+  document.getElementById('outlookBanner').style.display='none';
+  document.getElementById('outlookBtnTxt').textContent='Outlook';
+  showToast('👋','Outlook déconnecté');
+}
+
+function checkOutlookCallback(){
+  const hash=window.location.hash;
+  if(hash&&hash.includes('access_token')){
+    const params=new URLSearchParams(hash.slice(1));
+    const token=params.get('access_token');
+    if(token){
+      msalToken=token;S.outlookToken=token;save();
+      window.history.replaceState(null,null,window.location.pathname);
+      showToast('✅','Outlook connecté !');
+      syncOutlook();
+    }
+  }
+}
+
+async function syncOutlook(){
+  const token=msalToken||S.outlookToken;
+  if(!token){showToast('⚠️','Connecte Outlook d\'abord');return;}
+  const btn=document.getElementById('outlookBtnTxt');
+  if(btn)btn.textContent='Sync...';
+  try{
+    const now=new Date();
+    const end=new Date(now.getTime()+7*24*60*60*1000);
+    const url=`https://graph.microsoft.com/v1.0/me/calendarview?startDateTime=${now.toISOString()}&endDateTime=${end.toISOString()}&$orderby=start/dateTime&$top=10&$select=subject,start,end,location`;
+    const resp=await fetch(url,{headers:{Authorization:'Bearer '+token}});
+    if(resp.status===401){disconnectOutlook();showToast('🔑','Session expirée, reconnecte Outlook');return;}
+    const data=await resp.json();
+    S.outlookEvents=data.value||[];save();
+    renderOutlookEvents();
+    if(btn)btn.textContent='Outlook ✅';
+    document.getElementById('outlookBanner').style.display='block';
+    showToast('✅','Outlook synchronisé !');
+    // Auto-create tasks from events
+    S.outlookEvents.forEach(ev=>{
+      const start=new Date(ev.start.dateTime||ev.start.date);
+      const id='outlook-'+btoa(ev.subject+ev.start.dateTime).slice(0,12);
+      if(!S.freeTasks.find(t=>t.id===id)){
+        S.freeTasks.push({id,icon:'📅',name:ev.subject,timeStr:start.getHours()+'h'+String(start.getMinutes()).padStart(2,'0'),h:start.getHours(),m:start.getMinutes(),subject:'autre',days:[],fromOutlook:true});
+      }
+    });
+    save();renderTaskRow();
+  }catch(e){showToast('❌','Erreur sync Outlook');if(btn)btn.textContent='Outlook';}
+}
+
+function renderOutlookEvents(){
+  const container=document.getElementById('outlookEvents');
+  if(!container)return;
+  const events=S.outlookEvents||[];
+  if(!events.length){container.innerHTML='<div style="font-size:12px;color:var(--muted)">Aucun événement à venir</div>';return;}
+  const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  container.innerHTML=events.slice(0,5).map(ev=>{
+    const start=new Date(ev.start.dateTime||ev.start.date);
+    const ts=String(start.getHours()).padStart(2,'0')+'h'+String(start.getMinutes()).padStart(2,'0');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(0,120,212,.1);border-radius:8px">
+      <div style="font-size:11px;color:#7eb8f7;min-width:52px">${days[start.getDay()]} ${ts}</div>
+      <div style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.subject}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ALARMS ──────────────────────────────────────────────
+let alarmInterval=null;
+
+function addAlarm(){
+  const timeVal=document.getElementById('alarmTime').value;
+  const label=document.getElementById('alarmLabel').value.trim()||'Réveil';
+  if(!timeVal){showToast('⚠️','Choisis une heure !');return;}
+  const [h,m]=timeVal.split(':').map(Number);
+  if(!S.alarms)S.alarms=[];
+  S.alarms.push({id:uid(),h,m,label,active:true});
+  save();renderAlarms();
+  document.getElementById('alarmTime').value='';
+  document.getElementById('alarmLabel').value='';
+  showToast('⏰','Alarme ajoutée à '+timeVal+' !');
+}
+
+function renderAlarms(){
+  const list=document.getElementById('alarmsList');if(!list)return;
+  if(!S.alarms||!S.alarms.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">Aucune alarme configurée</div>';return;}
+  list.innerHTML=S.alarms.map(a=>`<div class="item-card" style="padding:9px 12px">
+    <div class="item-card-info">
+      <div class="item-card-title">⏰ ${String(a.h).padStart(2,'0')}:${String(a.m).padStart(2,'0')}</div>
+      <div class="item-card-sub">${a.label}</div>
+    </div>
+    <div class="item-card-actions">
+      <div class="toggle ${a.active?'on':''}" onclick="toggleAlarm('${a.id}')"></div>
+      <button class="icon-btn del" onclick="deleteAlarm('${a.id}')">🗑️</button>
+    </div>
+  </div>`).join('');
+}
+
+function toggleAlarm(id){const a=S.alarms.find(x=>x.id===id);if(a){a.active=!a.active;save();renderAlarms();}}
+function deleteAlarm(id){S.alarms=S.alarms.filter(x=>x.id!==id);save();renderAlarms();}
+
+function checkAlarms(now){
+  if(!S.alarms)return;
+  const h=now.getHours(),m=now.getMinutes();
+  const key0=now.toDateString();
+  S.alarms.filter(a=>a.active).forEach(a=>{
+    const key=key0+'-alarm-'+a.id;
+    if(a.h===h&&a.m===m&&!S.firedReminders[key]){
+      S.firedReminders[key]=true;save();
+      showNotifOverlay('⏰',a.label,'Il est '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' — '+a.label+' !');
+      sendBrowserNotif('⏰ '+a.label,'Il est l\'heure : '+a.label);
+      addLog('⏰ Alarme : '+a.label,'Déclenchée','alert');
+    }
+  });
+}
+
+// ─── AGENT IA ────────────────────────────────────────────
+let agentHistory=[];
+
+function agentQuick(msg){
+  document.getElementById('agentInput').value=msg;
+  sendAgentMessage();
+}
+
+function appendAgentMsg(role,text){
+  const c=document.getElementById('agentMessages');if(!c)return;
+  const d=document.createElement('div');
+  d.className='msg '+(role==='assistant'?'assistant':'user');
+  d.innerHTML=`<div class="msg-bubble" style="font-size:12px">${text.replace(/\n/g,'<br>')}</div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+
+async function sendAgentMessage(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');showPage('settings');return;}
+  const input=document.getElementById('agentInput');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  appendAgentMsg('user',text);
+  agentHistory.push({role:'user',content:text});
+
+  // Build context for agent
+  const tasksSummary=S.freeTasks.map(t=>`- ${t.name} (${t.timeStr||'sans heure'}, jours: ${t.days.length?t.days.join(','):'tous'})`).join('\n');
+  const planTasksSummary=S.planTasks.map(t=>`- ${t.name} le ${t.day} à ${t.h}h${t.m}`).join('\n');
+  const remindersSummary=S.reminders.map(r=>`- ${r.title} à ${r.h}h${r.m}`).join('\n');
+  const alarmsSummary=(S.alarms||[]).map(a=>`- ${a.label} à ${a.h}h${a.m}`).join('\n');
+  const outlookSummary=(S.outlookEvents||[]).map(ev=>`- ${ev.subject} le ${new Date(ev.start.dateTime||ev.start.date).toLocaleString('fr')}`).join('\n');
+  const now=new Date();
+
+  const sys=`Tu es un agent IA personnel de ${S.profile.name}. Tu peux AGIR sur ses données, pas juste conseiller.
+
+DONNÉES ACTUELLES:
+Tâches libres:\n${tasksSummary||'Aucune'}
+Tâches planning:\n${planTasksSummary||'Aucune'}
+Rappels:\n${remindersSummary||'Aucun'}
+Alarmes:\n${alarmsSummary||'Aucune'}
+Événements Outlook:\n${outlookSummary||'Aucun'}
+Heure actuelle: ${now.toLocaleString('fr')}
+
+ACTIONS DISPONIBLES — quand tu veux agir, inclus un bloc JSON dans ta réponse:
+- Créer tâche libre: {"action":"create_task","name":"...","h":8,"m":0,"days":["lun"],"icon":"📚","subject":"python"}
+- Supprimer tâche: {"action":"delete_task","name":"..."}
+- Créer alarme: {"action":"create_alarm","label":"...","h":7,"m":0}
+- Créer rappel: {"action":"create_reminder","title":"...","msg":"...","h":9,"m":0}
+- Analyser planning: {"action":"analyze"}
+
+Réponds en français, sois concis et action-oriented. Si tu effectues une action, dis-le clairement.`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sys,messages:agentHistory})});
+    const data=await resp.json();
+    if(data.error){appendAgentMsg('assistant','❌ '+( data.error.message||'Erreur API'));return;}
+    const reply=data.content?.map(i=>i.text||'').join('')||'Désolé, erreur.';
+    agentHistory.push({role:'assistant',content:reply});
+
+    // Execute actions from reply
+    const actionMatches=reply.match(/\{\"action\":[^}]+\}/g)||[];
+    actionMatches.forEach(match=>{
+      try{
+        const action=JSON.parse(match);
+        executeAgentAction(action);
+      }catch(e){}
+    });
+
+    // Show reply without JSON blobs
+    const cleanReply=reply.replace(/\{\"action\":[^}]+\}/g,'').trim();
+    appendAgentMsg('assistant',cleanReply);
+  }catch(e){appendAgentMsg('assistant','❌ Erreur, vérifie ta clé API');}
+}
+
+function executeAgentAction(action){
+  switch(action.action){
+    case 'create_task':
+      if(!S.freeTasks)S.freeTasks=[];
+      const ts=action.h!==undefined?String(action.h).padStart(2,'0')+'h'+(action.m?String(action.m).padStart(2,'0'):'00'):'';
+      S.freeTasks.push({id:uid(),icon:action.icon||'✅',name:action.name||'Nouvelle tâche',h:action.h,m:action.m||0,timeStr:ts,subject:action.subject||'autre',days:action.days||[],reminder:false});
+      save();renderTaskRow();renderAllSettings();
+      showToast('✅','Tâche créée : '+action.name);
+      break;
+    case 'delete_task':
+      const idx=S.freeTasks.findIndex(t=>t.name.toLowerCase().includes((action.name||'').toLowerCase()));
+      if(idx>=0){const name=S.freeTasks[idx].name;S.freeTasks.splice(idx,1);save();renderTaskRow();renderAllSettings();showToast('🗑️','Tâche supprimée : '+name);}
+      break;
+    case 'create_alarm':
+      if(!S.alarms)S.alarms=[];
+      S.alarms.push({id:uid(),h:action.h||7,m:action.m||0,label:action.label||'Réveil',active:true});
+      save();renderAlarms();
+      showToast('⏰','Alarme créée : '+action.label);
+      break;
+    case 'create_reminder':
+      S.reminders.push({id:uid(),icon:'🔔',title:action.title||'Rappel',msg:action.msg||'Rappel !',h:action.h||9,m:action.m||0,active:true});
+      save();renderAllSettings();
+      showToast('🔔','Rappel créé : '+action.title);
+      break;
+  }
+}
+
+async function analyzeSchedule(){
+  const key=getApiKey();
+  if(!key){showToast('🔑','Configure ta clé API dans Réglages !');return;}
+  appendAgentMsg('user','📊 Analyse mon planning et dis-moi si je suis surchargé');
+  agentHistory.push({role:'user',content:'Analyse mon planning et dis-moi si je suis surchargé, puis donne 3 conseils concrets.'});
+  await sendAgentMessage();
+}
+
 // ─── ONBOARDING ──────────────────────────────────────────
 function obShowStep(id){
   document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('active'));
@@ -1516,8 +1802,11 @@ if(!S.onboarded){
 }
 if(!S.birthdays)S.birthdays=[];
 if(!S.socialLinks)S.socialLinks={};
+if(!S.alarms)S.alarms=[];
+checkOutlookCallback();
 renderBirthdays();
 updateSocialBtns();
+renderAlarms();
 renderMedGrid();renderTaskRow();renderLogs();
 renderDays(WEEK1,'planpage-week1');
 renderDays(WEEKLY,'planpage-weekly');
