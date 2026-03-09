@@ -16,6 +16,24 @@
 html,body{height:100%;overflow:hidden;background:var(--bg);}
 body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-direction:column;padding-top:var(--safe-top);overscroll-behavior:none;-webkit-font-smoothing:antialiased;}
 
+/* LOCK SCREEN */
+#lockScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+#lockScreen.hidden{display:none;}
+.lock-logo{font-size:64px;margin-bottom:12px;}
+.lock-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
+.lock-sub{font-size:13px;color:var(--muted);margin-bottom:32px;text-align:center;}
+.lock-input-wrap{width:100%;max-width:320px;margin-bottom:14px;}
+.lock-dots{display:flex;justify-content:center;gap:14px;margin-bottom:20px;}
+.lock-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:.2s;}
+.lock-dot.filled{background:var(--accent);border-color:var(--accent);}
+.lock-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:280px;}
+.lock-key{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);cursor:pointer;transition:all .15s;text-align:center;}
+.lock-key:active{background:var(--accent);color:var(--bg);transform:scale(.94);}
+.lock-key.del{font-size:17px;color:var(--muted);}
+.lock-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
+.lock-error{color:var(--danger);font-size:13px;height:20px;text-align:center;margin-bottom:8px;}
+.lock-link{font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-top:16px;}
+
 /* OVERLAY / MODAL */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);z-index:3000;display:none;align-items:flex-end;justify-content:center;}
 .overlay.show{display:flex;}
@@ -376,6 +394,36 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
   </div>
 </div>
 
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-logo">🔐</div>
+  <div class="lock-title" id="lockTitle">Assistant Kiru</div>
+  <div class="lock-sub" id="lockSub">Entre ton code PIN à 4 chiffres</div>
+  <div class="lock-dots">
+    <div class="lock-dot" id="ld0"></div>
+    <div class="lock-dot" id="ld1"></div>
+    <div class="lock-dot" id="ld2"></div>
+    <div class="lock-dot" id="ld3"></div>
+  </div>
+  <div class="lock-error" id="lockError"></div>
+  <div class="lock-keypad">
+    <button class="lock-key" onclick="lockKey('1')">1</button>
+    <button class="lock-key" onclick="lockKey('2')">2</button>
+    <button class="lock-key" onclick="lockKey('3')">3</button>
+    <button class="lock-key" onclick="lockKey('4')">4</button>
+    <button class="lock-key" onclick="lockKey('5')">5</button>
+    <button class="lock-key" onclick="lockKey('6')">6</button>
+    <button class="lock-key" onclick="lockKey('7')">7</button>
+    <button class="lock-key" onclick="lockKey('8')">8</button>
+    <button class="lock-key" onclick="lockKey('9')">9</button>
+    <button class="lock-key empty"></button>
+    <button class="lock-key" onclick="lockKey('0')">0</button>
+    <button class="lock-key del" onclick="lockDel()">⌫</button>
+  </div>
+  <div class="lock-link" id="lockForgot" onclick="lockForgot()" style="display:none">Mot de passe oublié ?</div>
+  <div class="lock-link" id="lockSetupLink" onclick="lockSetupFirst()" style="display:none">Créer mon code PIN</div>
+</div>
+
 <div id="notifOverlay">
   <div class="notif-box">
     <span class="notif-emoji" id="notifEmoji">⏰</span>
@@ -553,6 +601,28 @@ body{font-family:'Karla',sans-serif;color:var(--text);display:flex;flex-directio
       <div class="settings-section-title">📅 Tâches planning (matière + jour)</div>
       <div class="item-list" id="planTasksList"></div>
       <button class="add-btn" style="margin-top:8px" onclick="openAddPlanTask()">＋ Ajouter une tâche planning</button>
+    </div>
+
+    <div class="settings-section" style="padding-bottom:30px">
+      <div class="settings-section-title">🔐 Sécurité &amp; Sauvegarde</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openPinSetup()">
+          <div class="settings-row-icon">🔒</div>
+          <div class="settings-row-info"><div class="settings-row-label">Code PIN</div><div class="settings-row-sub" id="pinStatusSub">Protège l'accès à ton appli</div></div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="exportData()">
+          <div class="settings-row-icon">📤</div>
+          <div class="settings-row-info"><div class="settings-row-label">Exporter mes données</div><div class="settings-row-sub">Sauvegarde un fichier JSON</div></div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <div class="settings-row" onclick="document.getElementById('importFile').click()">
+          <div class="settings-row-icon">📥</div>
+          <div class="settings-row-info"><div class="settings-row-label">Importer mes données</div><div class="settings-row-sub">Restaurer depuis une sauvegarde</div></div>
+          <div class="settings-row-arrow">›</div>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
     </div>
 
     <div class="settings-section" style="padding-bottom:30px">
@@ -1975,6 +2045,155 @@ async function analyzeSchedule(){
   await sendAgentMessage();
 }
 
+// ─── PIN / LOCK ──────────────────────────────────────────
+let lockBuffer='';
+let lockMode='check'; // 'check' | 'setup1' | 'setup2'
+let lockTemp='';
+
+function initLock(){
+  const pin=localStorage.getItem('kiru_pin');
+  const sub=document.getElementById('pinStatusSub');
+  if(sub)sub.textContent=pin?'✅ Code PIN activé':'Non configuré';
+  if(!pin){
+    // Pas de PIN : montrer bouton création
+    document.getElementById('lockScreen').classList.add('hidden');
+    document.getElementById('lockSetupLink').style.display='block';
+    document.getElementById('lockSub').textContent='Crée un code PIN pour sécuriser ton appli';
+    document.getElementById('lockTitle').textContent='Bienvenue '+( S.profile?.name||'Kiru')+' 👋';
+    return;
+  }
+  // Il y a un PIN : afficher l'écran de verrouillage
+  lockMode='check';
+  document.getElementById('lockScreen').classList.remove('hidden');
+  document.getElementById('lockForgot').style.display='block';
+  document.getElementById('lockSub').textContent='Entre ton code PIN à 4 chiffres';
+}
+
+function lockKey(k){
+  if(lockBuffer.length>=4)return;
+  lockBuffer+=k;
+  updateLockDots();
+  if(lockBuffer.length===4)setTimeout(lockSubmit,120);
+}
+
+function lockDel(){
+  lockBuffer=lockBuffer.slice(0,-1);
+  updateLockDots();
+  document.getElementById('lockError').textContent='';
+}
+
+function updateLockDots(){
+  for(let i=0;i<4;i++){
+    document.getElementById('ld'+i).classList.toggle('filled',i<lockBuffer.length);
+  }
+}
+
+function lockSubmit(){
+  if(lockMode==='check'){
+    const pin=localStorage.getItem('kiru_pin');
+    if(lockBuffer===pin){
+      document.getElementById('lockScreen').classList.add('hidden');
+    } else {
+      document.getElementById('lockError').textContent='Code incorrect, réessaie';
+      lockBuffer='';updateLockDots();
+    }
+  } else if(lockMode==='setup1'){
+    lockTemp=lockBuffer;lockBuffer='';updateLockDots();
+    lockMode='setup2';
+    document.getElementById('lockSub').textContent='Confirme ton code PIN';
+    document.getElementById('lockError').textContent='';
+  } else if(lockMode==='setup2'){
+    if(lockBuffer===lockTemp){
+      localStorage.setItem('kiru_pin',lockBuffer);
+      document.getElementById('lockScreen').classList.add('hidden');
+      const sub=document.getElementById('pinStatusSub');
+      if(sub)sub.textContent='✅ Code PIN activé';
+      showToast('🔒','Code PIN créé !');
+    } else {
+      document.getElementById('lockError').textContent='Les codes ne correspondent pas';
+      lockBuffer='';lockTemp='';updateLockDots();
+      lockMode='setup1';
+      document.getElementById('lockSub').textContent='Choisis un code PIN à 4 chiffres';
+    }
+  }
+}
+
+function lockSetupFirst(){
+  lockMode='setup1';lockBuffer='';updateLockDots();
+  document.getElementById('lockSub').textContent='Choisis un code PIN à 4 chiffres';
+  document.getElementById('lockSetupLink').style.display='none';
+  document.getElementById('lockError').textContent='';
+}
+
+function lockForgot(){
+  if(confirm('Réinitialiser le code PIN ? Tes données restent sauvegardées.')){
+    localStorage.removeItem('kiru_pin');
+    document.getElementById('lockScreen').classList.add('hidden');
+    showToast('🔓','Code PIN supprimé');
+    const sub=document.getElementById('pinStatusSub');
+    if(sub)sub.textContent='Non configuré';
+  }
+}
+
+function openPinSetup(){
+  const pin=localStorage.getItem('kiru_pin');
+  openModal('🔒 Code PIN',`
+    <div style="background:rgba(244,200,122,.08);border:1px solid rgba(244,200,122,.3);border-radius:12px;padding:12px;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+      ${pin?'✅ Code PIN activé. Tu peux le modifier ou le supprimer.':'Crée un code PIN pour protéger ton assistant.'}
+    </div>
+    <button class="btn btn-primary" style="margin-bottom:8px" onclick="closeModal();setupPinFlow()">🔑 ${pin?'Modifier':'Créer'} le code PIN</button>
+    ${pin?'<button class="btn btn-danger" onclick="removePinConfirm()">🗑️ Supprimer le code PIN</button>':''}`);
+}
+
+function setupPinFlow(){
+  lockMode='setup1';lockBuffer='';updateLockDots();
+  document.getElementById('lockSub').textContent='Choisis un code PIN à 4 chiffres';
+  document.getElementById('lockError').textContent='';
+  document.getElementById('lockForgot').style.display='none';
+  document.getElementById('lockSetupLink').style.display='none';
+  document.getElementById('lockScreen').classList.remove('hidden');
+}
+
+function removePinConfirm(){
+  if(confirm('Supprimer le code PIN ?')){
+    localStorage.removeItem('kiru_pin');
+    closeModal();showToast('🔓','Code PIN supprimé');
+    const sub=document.getElementById('pinStatusSub');
+    if(sub)sub.textContent='Non configuré';
+  }
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url;a.download='assistant-kiru-sauvegarde-'+date+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📤','Sauvegarde téléchargée !');
+}
+
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.profile){showToast('❌','Fichier invalide !');return;}
+      if(confirm('Importer cette sauvegarde ? Tes données actuelles seront remplacées.')){
+        Object.assign(S,data);
+        save();
+        renderAllSettings();renderMedGrid();renderTaskRow();renderLogs();renderBirthdays();renderRemindList();
+        showToast('📥','Données restaurées !');
+      }
+    }catch(ex){showToast('❌','Erreur de lecture du fichier');}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
 // ─── ONBOARDING ──────────────────────────────────────────
 function obShowStep(id){
   document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('active'));
@@ -2041,6 +2260,8 @@ updateProgress();renderRemindList();
 updateClock();setInterval(updateClock,1000);
 requestNotif();
 ['touchstart','click'].forEach(ev=>document.addEventListener(ev,()=>{if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}},{once:true}));
+// Initialiser l'écran de verrouillage
+initLock();
 </script>
 </body>
 </html>
